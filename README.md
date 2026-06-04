@@ -97,3 +97,38 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 - 命令： nmcli connection up ens160
 - 我的输出：
 - 理解：重启ens160使其配置生效。
+
+10.**查看服务状态**
+- 命令： systemctl status nginx
+- 我的输出：
+- 理解： 用来查看服务的状态
+
+11.**启动服务**
+- 命令： systemctl start nginx
+- 我的输出：
+- 理解： 用于启动服务
+
+12.**设置开机自启动**
+- 命令： systemctl enable nginx
+- 我的输出：
+- 理解：让服务在以后的开机时自启动
+
+13.**关闭开机自启动**
+- 命令： systemctl disable nginx
+- 我的输出：
+- 理解：关闭服务的开机自启动
+
+### Day 2: Nginx 服务与 Firewall 防火墙排障实战
+1. **接管与验证系统服务 (systemd)**
+   - 启动并设置开机自启：`sudo systemctl start nginx` / `sudo systemctl enable nginx`
+   - 端口监听检查：`ss -tulnp | grep 80` (查看到 0.0.0.0:80 处于 LISTEN 状态，代表服务内部运行正常)
+
+2. **故障排查：Nginx 启动正常但浏览器访问超时**
+   - **故障现象**：终端显示服务运行正常，但宿主机浏览器访问静态 IP 时提示 `ERR_CONNECTION_TIMED_OUT`。
+   - **排错逻辑**：服务在虚拟机内部正常监听，但外部请求进不来，果断判定为 CentOS 9 默认的防火墙 (`firewalld`) 拦截了流量。
+   - **解决步骤**：
+     1. `sudo firewall-cmd --state` (确认防火墙正在运行)
+     2. `sudo firewall-cmd --permanent --add-service=http` (永久放行 80 端口的 Web 流量)
+     3. `sudo firewall-cmd --reload` (平滑重载，使规则生效)
+     4. `sudo firewall-cmd --list-all` (复核规则，确认 services 中已包含 http)
+   - **结果**：重新刷新浏览器，成功看到 Nginx 默认欢迎页。
