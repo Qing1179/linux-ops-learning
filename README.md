@@ -72,3 +72,28 @@ tmpfs                363M   96K  363M    1% /run/user/1000
 
 -理解： 核心关注挂载点为 /（根目录）的那一行。我当前的根目录所在分区是 /dev/mapper/cs-root，总容量 35G，已用 5.2G，使用了 16%。在日常运维中，如果这个挂载点的使用率超过 80%，就需要立刻通过 du -sh * 命令去寻找并清理大文件（通常是无用的旧日志）了
 
+6.**查看设备状态（Device）**
+-命令： nmcli device status
+-我的输出：DEVICE  TYPE      STATE         CONNECTION 
+ens192  ethernet  已连接        ens192     
+ens160  ethernet  已连接        ens160     
+lo      loopback  连接（外部）  lo 
+-理解：这条命令是用来检测底层的物理网卡，现在有三块儿网卡
+
+7.**查看连接状态**
+- 命令：'nmcli connection show'
+- 我的输出：NAME    UUID                                  TYPE      DEVICE 
+ens192  200f934a-4e77-3c47-8989-2470902617f9  ethernet  ens192 
+ens160  9bba0e7a-2a2c-3cc7-8605-741bdcd53837  ethernet  ens160 
+lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo 
+- 理解： 已经有了三块物理网卡的配置信息文件
+
+8.**配置网卡信息**
+- 命令： 'nmcli connection modify ens160 ipv4.method manual ipv4.addresses 192.169.100.20/24 autoconnect yes ipv4.gateway ""'
+- 我的输出：
+-理解： 配置修改网卡ens160为静态IP并手动配置IP设置开机自启并把网关设为空
+
+9.**重启网卡**
+- 命令： nmcli connection up ens160
+- 我的输出：
+- 理解：重启ens160使其配置生效。
