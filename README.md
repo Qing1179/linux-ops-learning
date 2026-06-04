@@ -86,10 +86,10 @@ lo      loopback  连接（外部）  lo
 ens192  200f934a-4e77-3c47-8989-2470902617f9  ethernet  ens192 
 ens160  9bba0e7a-2a2c-3cc7-8605-741bdcd53837  ethernet  ens160 
 lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo 
-- 理解： 已经有了三块物理网卡的配置信息文件
+- 理解： 已经有了两块物理网卡和一块虚拟网卡的配置信息文件
 
 8.**配置网卡信息**
-- 命令： 'nmcli connection modify ens160 ipv4.method manual ipv4.addresses 192.169.100.20/24 autoconnect yes ipv4.gateway ""'
+- 命令： 'nmcli connection modify ens160 ipv4.method manual ipv4.addresses 192.168.100.20/24 autoconnect yes ipv4.gateway ""'
 - 我的输出：
 -理解： 配置修改网卡ens160为静态IP并手动配置IP设置开机自启并把网关设为空
 
