@@ -132,3 +132,10 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
      3. `sudo firewall-cmd --reload` (平滑重载，使规则生效)
      4. `sudo firewall-cmd --list-all` (复核规则，确认 services 中已包含 http)
    - **结果**：重新刷新浏览器，成功看到 Nginx 默认欢迎页。
+
+3. Nginx 日志监控与 HTTP 状态码分析
+--**实战操作**：使用‘tail -f /var/log/nginx/access。log’实时监控外部访问流量。
+--**系统级排错**：使用‘journalctl -u nginx -e’查看服务器底层的最新运行日志。
+-**理解**：
+    -状态码 ‘200’:请求访问成功，服务端正常交货。
+    -状态码 ’404‘：基础设施（网络，防火墙，web服务）100%正常，但客户端请求的文件或页面服务器端不存在。
