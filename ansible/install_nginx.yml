@@ -1,0 +1,16 @@
+---
+- name: 在所有 Web 服务器上部署 Nginx
+  hosts: webservers
+  become: yes
+
+  tasks:
+    - name: 步骤一： 通过 dnf 安装Nginx
+      dnf:
+        name: nginx
+        state: present
+
+    - name: 步骤二： 启动Nginx 并设置开机自启
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes

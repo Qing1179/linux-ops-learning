@@ -149,3 +149,12 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 - **底层凭证**：使用‘ssh-keygen -t ed25519’生成高强度密钥，并通过 ‘ssh-copy-id’推送公钥，打通SSH免密登录的通道。
 - **Ansible 集结**：编写‘hosts.ini’资产清单，使用‘ansible -i hosts.ini webservers -m ping’成功验证集群连通性。
 - **Ad-Hoc 临时命令**：使用‘command’模块（例如：‘ansible ... -m command -a "free -h"’）成功实现跨服务器的批量信息采集与系统控制。
+
+6.Ansible Playbook 剧本编写与幂等性实战
+- **核心理念**：基础设施即代码 (IaC)。通过编写 YAML 格式的剧本，实现复杂部署流程的固化与复用。
+- **YAML 语法铁律**：严格使用空格进行层级缩进，绝对禁止使用 Tab 键。
+- **实战部署**：编写 `install_nginx.yml`。
+  1. 使用 `dnf` 模块自动化安装 Nginx。
+  2. 使用 `systemd` 模块配置开机自启 (`enabled: yes`) 并拉起服务。
+  3. 使用 `firewalld` 模块全自动放行 HTTP 流量，并通过 `immediate: yes` 实现规则的热重载。
+- **企业级特性理解（幂等性 Idempotency）**：重复执行同一个 Playbook，Ansible 会自动对比系统当前状态与期望状态，只执行有差异的部分（变更为黄色的 changed，无需变更则为绿色的 ok），保证系统安全与稳定。
