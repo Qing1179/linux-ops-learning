@@ -143,3 +143,9 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 4.Shell 脚本与 con 自动化定时任务
 -**实战**：编写 ‘sys_check.sh’提取内存与核心数据。
 -**排错要点**：配置‘crontab -e’时，脚本路径要使用绝对路径，并通过“>>”将标准输出和错误输出(2>&1)
+
+5.*** 跨机自动化集群搭建（Ansible 实战）
+- **架构设计**：采用标准的主从架构（Master-Node）。控制节点负责发送指令，被控节点负责执行。
+- **底层凭证**：使用‘ssh-keygen -t ed25519’生成高强度密钥，并通过 ‘ssh-copy-id’推送公钥，打通SSH免密登录的通道。
+- **Ansible 集结**：编写‘hosts.ini’资产清单，使用‘ansible -i hosts.ini webservers -m ping’成功验证集群连通性。
+- **Ad-Hoc 临时命令**：使用‘command’模块（例如：‘ansible ... -m command -a "free -h"’）成功实现跨服务器的批量信息采集与系统控制。
