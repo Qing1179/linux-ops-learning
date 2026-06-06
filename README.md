@@ -158,3 +158,26 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
   2. 使用 `systemd` 模块配置开机自启 (`enabled: yes`) 并拉起服务。
   3. 使用 `firewalld` 模块全自动放行 HTTP 流量，并通过 `immediate: yes` 实现规则的热重载。
 - **企业级特性理解（幂等性 Idempotency）**：重复执行同一个 Playbook，Ansible 会自动对比系统当前状态与期望状态，只执行有差异的部分（变更为黄色的 changed，无需变更则为绿色的 ok），保证系统安全与稳定。
+
+7.Nginx 非标准端口迁移与 SElinux 排障复盘
+1.排障误区
+- **日志参数错位**：使用 `journalctl` 查看特定服务日志时，带有参数值（如 `-u 服务名`）的选项必须放在最后。错误写法：`-xue`（系统会把 e 当作服务名）。正确写法：`-xeu nginx.service`。
+- **盲目杀进程**：当服务启动失败时（`exited with error code`），代表进程根本不存在。此时使用 `ps -ef | grep` 只能抓取到 `grep` 命令本身。严禁对着空气执行 `kill -9`，更不能直接在 `kill` 后加程序名（必须接 PID）。
+
+2. Web 服务排障标准流程
+当 Nginx 启动失败时，严格遵守以下排查顺序：
+1. **语法检查**：优先执行 `sudo nginx -t`。如果是修改配置文件导致的标点符号、空格遗漏，它会精准定位到报错行数。
+2. **底层日志捕捉**：如果 `nginx -t` 显示 `syntax is ok` 但服务依然起不来，执行 `sudo journalctl -xeu nginx.service` 查看内核与系统级拦截日志。
+
+3. SELinux 安全策略拦截与突破
+- **故障现象**：Nginx 语法正确，但启动失败。`journalctl` 日志中出现 `bind() to 0.0.0.0:8088 failed (13: Permission denied)`。
+- **根本原因**：CentOS 9 默认启用 SELinux。其安全策略的白名单中，HTTP 服务默认只允许绑定 80、443 等常规端口。修改为非标准端口（如 8088）会在系统内核层被直接阻断。
+- **解决步骤（严禁直接关闭 SELinux）**：
+  1. 安装 SELinux 管理工具：`sudo dnf install policycoreutils-python-utils -y`
+  2. 将新端口加入 HTTP 白名单：`sudo semanage port -a -t http_port_t -p tcp 8088`
+  3. 重启服务生效：`sudo systemctl restart nginx`
+
+4. Firewall 针对非标准端口的放行策略
+- 当服务不使用标准端口时，防火墙放行不能再使用服务名（`--add-service=http`），必须精确放行端口号加协议：
+  `sudo firewall-cmd --permanent --add-port=8088/tcp`
+  `sudo firewall-cmd --reload`
