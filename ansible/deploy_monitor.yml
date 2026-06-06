@@ -1,0 +1,18 @@
+---
+- name: 在机器B运行自动化脚本
+  hosts: webservers
+  become: yes
+
+  tasks:
+    - name: 任务一： 下发磁盘监控脚本
+      copy:
+        src: ~/linux-ops-learning/scripts/disk_monitor.sh
+        dest: /tmp/disk_monitor.sh
+        mode: '0755'
+
+    - name: 任务二： 配置每日凌晨定时任务
+      cron:
+        name: "每日根目录磁盘空间巡查"
+        minute: "0"
+        hour: "3"
+        job: "/tmp/disk_monitor.sh >> /tmp/disk_report.log 2>&1"

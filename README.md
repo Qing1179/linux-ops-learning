@@ -181,3 +181,13 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 - 当服务不使用标准端口时，防火墙放行不能再使用服务名（`--add-service=http`），必须精确放行端口号加协议：
   `sudo firewall-cmd --permanent --add-port=8088/tcp`
   `sudo firewall-cmd --reload`
+
+8. Ansible 多模块复合剧本与系统日志高级过滤
+
+1. 高级日志过滤与多行截断排障
+- **核心经验**：在生产环境中，使用 `journalctl -n 15` 容易被突发的系统高频日志冲掉真正报错，或由于单行过长导致关键死因被 `>` 截断。
+- **最佳实践**：必须结合管道符与 `grep` 进行关键字狙击。例如：`sudo journalctl | grep 服务名`，可以跨越时间限制，精准剥离出如 `Unit not found` 等核心线索。
+
+2. Ansible 批量文件分发与定时任务闭环管理
+- **资产下发 (`copy` 模块)**：通过 `src` 和 `dest` 实现文件的跨服务器推送。必须配合 `mode: '0755'` 参数，在推送到远程的同时赋予执行权限，否则脚本无法后台运转。
+- **账本托管 (`cron` 模块)**：通过定义唯一的 `name` 参数，实现定时任务的幂等性管理。Ansible 会以此名字在被控端生成标识，避免重复写入对原有 crontab 造成破坏。
