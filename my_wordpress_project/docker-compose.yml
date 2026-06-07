@@ -1,0 +1,29 @@
+services:
+  # 1. 定义数据库集装箱
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_super_password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wp_user
+      MYSQL_PASSWORD: wp_password
+    volumes:
+      - db_data:/var/lib/mysql  # 数据持久化，防止删库跑路
+
+  # 2. 定义业务前端集装箱
+  wordpress:
+    image: wordpress:latest
+    ports:
+      - "8088:80"
+    environment:
+      WORDPRESS_DB_HOST: db  # 极其神奇的地方：直接写数据库集装箱的名字即可，Docker 会自动解析 IP！
+      WORDPRESS_DB_USER: wp_user
+      WORDPRESS_DB_PASSWORD: wp_password
+      WORDPRESS_DB_NAME: wordpress
+    depends_on:
+      - db  # 告诉系统：必须先等数据库启动了，再启动我
+
+# 声明在宿主机硬盘上开辟一块持久化空间
+volumes:
+  db_data:
+      

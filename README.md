@@ -234,3 +234,19 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 - **正确规范（提权最佳实践）**：
   1. **大门留给普通用户**：不加 `sudo`，让 Ansible 默认以普通用户（如 `qing`）的身份建立 SSH 免密通道进入目标机。
   2. **进门内部提权**：进入目标机后，依靠剧本内部声明的 `become: yes` 结合外部输入的提权密码参数（`-K`），在系统内部临时切换至 root 权限干活。
+
+12.Docker Compose 多容器集群编排与 IaC 实践
+
+1. 核心价值
+解决单体容器 (docker run) 无法高效管理多组件复杂依赖的痛点。通过声明式的 YAML 文件，一键完成多容器的拉取、网络打通、挂载配置及启动顺序控制。
+
+2. Compose 剧本 (docker-compose.yml) 核心语法
+- `services`: 定义集群中包含的各个集装箱模块（如 Web 前端、DB 后端）。
+- `environment`: 注入容器所需的系统环境变量（如数据库的账号密码）。
+- `depends_on`: 声明启动顺序优先级，避免业务端因数据库未就绪而崩溃。
+- `networks` & `volumes`: 自动在底层构建隔离的局域网与持久化数据通道。
+
+3. 舰队调度指令
+- `sudo docker compose up -d`：读取图纸，后台一键拉起整个集群。
+- `sudo docker compose ps`：检阅当前目录下集群的运行状态。
+- `sudo docker compose down`：一键摧毁集群容器及网络（但通过 volumes 挂载的数据会安全保留）。
