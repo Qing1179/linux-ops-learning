@@ -1,0 +1,8 @@
+---
+ - name: 终极战役：跨主机全自动部署 Docker 容器
+   hosts: webservers
+   become: yes
+  
+   tasks:
+     - name: 任务一：在被控端直接拉起 Nginx 集装箱 (映射 9090 端口
+       command: docker run -d -p 9090:80 --name remote_nginx nginx

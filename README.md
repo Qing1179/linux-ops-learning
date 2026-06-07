@@ -218,3 +218,19 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
   *(注意：命令末尾的 `.` 代表构建上下文路径为当前目录，极其关键。)*
 - **独立运行**：
   `sudo docker run -d -p 8081:80 --name my_custom_website ernestine-web:v1`
+
+11.Ansible 跨主机 Docker 自动化编排与 SSH 权限陷阱复盘
+
+1. 跨主机容器编排架构
+- **核心逻辑**：利用 Ansible 的 `command` 或 `shell` 模块，将宿主机（控制端）的编排指令跨越网络下发至被控端，直接调度远端的 Docker 引擎。
+- **实战命令**：在剧本中通过 `command: docker run -d -p 9090:80 --name remote_nginx nginx` 实现了在被控端全自动拉起标准集装箱。
+
+2. 经典大坑：Sudo 隐式触发的 SSH 认证失败 (UNREACHABLE)
+- **故障现象**：执行剧本时满屏报红，提示 `UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: root@192.168.100.10: Permission denied..."}`。
+- **根本原因**：
+  - 在控制端错误地使用了 `sudo ansible-playbook ...`。
+  - 当加上 `sudo` 时，Ansible 进程在本地以 `root` 身份运行，从而默认会以 `root@目标IP` 的身份去尝试 SSH 远程连接。
+  - 现代企业级 Linux（如 CentOS 9）的安全策略中，默认通过 `/etc/ssh/sshd_config` 中的 `PermitRootLogin no` **禁止了 root 用户直接进行远端 SSH 登录**，导致连接被坚决拒绝。
+- **正确规范（提权最佳实践）**：
+  1. **大门留给普通用户**：不加 `sudo`，让 Ansible 默认以普通用户（如 `qing`）的身份建立 SSH 免密通道进入目标机。
+  2. **进门内部提权**：进入目标机后，依靠剧本内部声明的 `become: yes` 结合外部输入的提权密码参数（`-K`），在系统内部临时切换至 root 权限干活。
