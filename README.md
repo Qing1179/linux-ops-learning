@@ -204,3 +204,17 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 - **现象记录**：在未配置 `firewall-cmd` 放行 8080 端口的情况下，通过 Docker 映射的 8080 端口依然可以直接从外部访问。
 - **底层原理**：Docker 守护进程在启动端口映射时，会**直接修改内核底层的 iptables 规则**，从而绕过上层的 firewalld 限制。
 - **运维规范**：在生产环境中暴露 Docker 端口时必须极其谨慎，切勿过度依赖 firewalld 进行容器层面的安全防护。
+
+10.Infrastructure as Code - Dockerfile 定制专属镜像
+1. 核心理念与价值
+从传统的“基于宿主机挂载目录 (`-v`)” 进化为 “将环境与代码整体打包”。通过 Dockerfile，实现真正的“一次构建，到处运行”，彻底消除环境差异导致的部署故障。
+
+2. 标准造箱流水线
+- **编写图纸 (Dockerfile)**：
+  - `FROM` 指令：定义基础环境底座（如 `nginx:latest`）。
+  - `COPY` 指令：将宿主机本地代码（货物）精准注入到镜像内部路径。
+- **启动机床 (Build)**：
+  `sudo docker build -t ernestine-web:v1 .`
+  *(注意：命令末尾的 `.` 代表构建上下文路径为当前目录，极其关键。)*
+- **独立运行**：
+  `sudo docker run -d -p 8081:80 --name my_custom_website ernestine-web:v1`
