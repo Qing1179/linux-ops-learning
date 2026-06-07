@@ -160,7 +160,7 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 - **企业级特性理解（幂等性 Idempotency）**：重复执行同一个 Playbook，Ansible 会自动对比系统当前状态与期望状态，只执行有差异的部分（变更为黄色的 changed，无需变更则为绿色的 ok），保证系统安全与稳定。
 
 7.Nginx 非标准端口迁移与 SElinux 排障复盘
-1.排障误区
+.1.排障误区
 - **日志参数错位**：使用 `journalctl` 查看特定服务日志时，带有参数值（如 `-u 服务名`）的选项必须放在最后。错误写法：`-xue`（系统会把 e 当作服务名）。正确写法：`-xeu nginx.service`。
 - **盲目杀进程**：当服务启动失败时（`exited with error code`），代表进程根本不存在。此时使用 `ps -ef | grep` 只能抓取到 `grep` 命令本身。严禁对着空气执行 `kill -9`，更不能直接在 `kill` 后加程序名（必须接 PID）。
 
@@ -191,3 +191,16 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 2. Ansible 批量文件分发与定时任务闭环管理
 - **资产下发 (`copy` 模块)**：通过 `src` 和 `dest` 实现文件的跨服务器推送。必须配合 `mode: '0755'` 参数，在推送到远程的同时赋予执行权限，否则脚本无法后台运转。
 - **账本托管 (`cron` 模块)**：通过定义唯一的 `name` 参数，实现定时任务的幂等性管理。Ansible 会以此名字在被控端生成标识，避免重复写入对原有 crontab 造成破坏。
+
+9.Docker 容器化起航与网络穿透特性
+
+1. 运行首个容器 (Nginx)
+- **命令语法**：`docker run -d -p 8080:80 --name my_first_container nginx`
+- **核心参数解析**：
+  - `-d`：后台静默运行 (detach)。
+  - `-p 宿主机端口:容器内端口`：端口映射，将宿主机流量转发至容器内部。
+
+2. 企业级警示：Docker 与 Firewalld 的冲突
+- **现象记录**：在未配置 `firewall-cmd` 放行 8080 端口的情况下，通过 Docker 映射的 8080 端口依然可以直接从外部访问。
+- **底层原理**：Docker 守护进程在启动端口映射时，会**直接修改内核底层的 iptables 规则**，从而绕过上层的 firewalld 限制。
+- **运维规范**：在生产环境中暴露 Docker 端口时必须极其谨慎，切勿过度依赖 firewalld 进行容器层面的安全防护。
