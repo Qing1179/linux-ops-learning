@@ -414,3 +414,47 @@ mysql -u app_user -p
 
 查看当前视野内的数据库
 mysql> show databases;
+
+19.CentOS 9 底层部署 Redis 极速缓存与安全加固
+
+**实战场景**：为缓解 MySQL 数据库的并发读写压力，在服务器底层部署 Redis 纯内存缓存引擎。为防止沦为公网“肉鸡”，必须通过修改底层配置实现严格的鉴权与网络隔离。
+
+核心操作流
+
+1. 底层安装与引擎点火
+使用包管理器极速安装
+sudo dnf install redis -y
+
+唤醒守护进程并写入开机启动项
+sudo systemctl enable --now redis
+
+2. 核心大闸：企业级安全加固 (vi 高阶搜索实战)
+默认安装的 Redis 处于极其危险的无密码状态，必须深潜入 /etc/redis.conf 进行加固。
+sudo vi /etc/redis.conf
+
+vi 搜索脱困绝技：
+
+输入 /requirepass 开启全局搜索。
+
+遇到大量 # If the master is... 等官方说明文档干扰时，果断按 n 键 (next) 跳跃匹配，直到锁定真正的配置项 # requirepass foobared。
+
+核心修改动作：
+
+上锁：按 i 删掉 # 解除注释，将密码替换为强密码（如 requirepass Redis@2026）。
+
+断网：搜索并确认 bind 127.0.0.1 存在，死守网络边界，彻底切断公网直连的可能。
+
+3. 重启生效与鉴权测试
+踢醒系统管家，重新加载配置
+sudo systemctl restart redis
+
+踏入控制台
+redis-cli
+
+鉴权拦截测试：直接敲击 ping，触发 (error) NOAUTH Authentication required. 报错，验证防盗锁生效。
+
+合法授权通行：
+127.0.0.1:6379> auth 你的密码
+  OK
+  127.0.0.1:6379> ping
+  PONG
