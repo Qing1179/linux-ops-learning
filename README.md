@@ -325,3 +325,55 @@ d第二步：精准定位（揪出巨型垃圾文件）
   du -sh /*
 统计根目录下第一层各个文件夹的总大小。如果发现 /var 特别大，继续执行 du -sh /var/* 顺藤摸瓜，直到找出占用空间最大的子目录。
 ** 清空方法：echo "" > /路径/到/那个巨大的日志文件.log
+
+18.CentOS 9 底层部署 Nginx 与 MySQL 8.0
+
+**测试环境**：腾讯云 4C4G 轻量应用服务器 (公网直连，无 NAT 转换)
+**操作系统**：CentOS 9
+**部署方式**：包管理器 (dnf) 纯手工底层安装
+
+模块一：Nginx 反向代理网关部署
+
+1. 核心安装与控制指令
+使用包管理器安装 Nginx (-y 自动确认)
+sudo dnf install nginx -y
+
+启动 Nginx 并设置开机自启 (一条命令打通)
+sudo systemctl enable --now nginx
+
+检查运行状态 (寻找 active running 绿字)
+sudo systemctl status nginx
+
+2. 目录结构与底层架构解密
+默认网页存放路径 (胃)：/usr/share/nginx/html/
+
+实战操作：使用 echo "<h1>Hello Server</h1>" > /usr/share/nginx/html/index.html 可直接覆盖默认网页进行快速测试。
+
+核心配置文件路径 (大脑)：/etc/nginx/nginx.conf
+
+严禁直接大改主配置文件！主配置中通过 include /etc/nginx/conf.d/*.conf; 实现了配置解耦。
+
+企业规范做法：在 conf.d/ 目录下为每个新网站创建独立的 .conf 文件。
+
+模块二：MySQL 8.0 关系型数据库底层铸造
+1. 安装与守护进程唤醒
+安装 MySQL 服务端
+sudo dnf install mysql-server -y
+
+唤醒 MySQL 守护大老板 (注意末尾的 d)
+sudo systemctl enable --now mysqld
+
+2. 核心大闸：纯命令行安全加固向导
+刚装好的 MySQL 无密码且存在漏洞，必须立刻执行安全初始化：
+sudo mysql_secure_installation
+
+3. 控制台登录与基础 SQL
+Bash
+以 root 身份登录，并请求输入密码
+mysql -u root -p
+
+【SQL 实战】查看当前系统核心数据库 (务必加分号！)
+mysql> show databases;
+
+安全退出数据库控制台
+mysql> exit;
