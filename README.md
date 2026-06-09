@@ -377,3 +377,40 @@ mysql> show databases;
 
 安全退出数据库控制台
 mysql> exit;
+
+4.**实战场景**：为了保障服务器数据安全，绝不能在代码中直接暴露 root 超级管理员密码。必须为每个独立的业务系统开辟专属的“小金库”，并配备权限严格受限的“专属业务账号”。
+
+核心操作流（DBA 标准规范）
+
+1. 以最高指挥官身份登舰
+使用 root 账号登录 MySQL
+mysql -u root -p
+
+2. 开辟专属业务金库 (创建数据库)
+企业级规范：必须指定兼容全球字符和 Emoji 的 utf8mb4 字符集，防止未来业务出现中文乱码。
+CREATE DATABASE app_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+3. 招募专属业务员 (创建普通账号)
+企业安全红线：限制账号只能从服务器本地 (localhost) 登录，彻底切断公网直连的被黑风险。
+
+4.颁发专属钥匙 (权限下放与授权)
+将 app_db 的所有操作权限授予该业务账号。
+
+排错避坑笔记：
+SQL 语法极其严格，务必注意单词拼写，切勿将 GRANT (授予) 误敲为 CRANT，否则会引发 ERROR 1064 (42000) SQL syntax 语法报错。
+若敲击中途漏掉分号导致出现 -> 提示符，可使用 Ctrl + C 强制中断当前错误输入。
+正确的授权指令
+GRANT ALL PRIVILEGES ON app_db.* TO 'app_user'@'localhost';
+
+刷新系统权限表，使授权立刻生效！(极其重要)
+FLUSH PRIVILEGES;
+
+5. 安全撤离与权限验证
+退出 root 身份
+mysql> exit;
+
+模拟业务代码，使用新账号重新登录验证
+mysql -u app_user -p
+
+查看当前视野内的数据库
+mysql> show databases;
