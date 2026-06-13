@@ -1,130 +1,9 @@
-# 云计算运维一个月通关计划
-# Day 1: Centos 9 系统基础知识采集
-
-1.**查看系统内核与版本**
-- 命令：'uname -r'
-- 我的输出: '5.14.0-708.el9.x86_64'
-- 理解:这代表我正在使用的是5.14版本的Linux内核。
-
-2.**查看操作系统信息**
-- 命令： 'cat /etc/os-release'
-- 我的输出： NAME="CentOS Stream"
-VERSION="9"
-ID="centos"
-ID_LIKE="rhel fedora"
-VERSION_ID="9"
-PLATFORM_ID="platform:el9"
-PRETTY_NAME="CentOS Stream 9"
-ANSI_COLOR="0;31"
-LOGO="fedora-logo-icon"
-CPE_NAME="cpe:/o:centos:centos:9"
-HOME_URL="https://centos.org/"
-BUG_REPORT_URL="https://issues.redhat.com/"
-REDHAT_SUPPORT_PRODUCT="Red Hat Enterprise Linux 9"
-REDHAT_SUPPORT_PRODUCT_VERSION="CentOS Stream"
-- 理解：这代表我使用的是centos strea 操作系统。
-
-3.**查看IP地址**
-- 命令： 'ip addr'
-- 我的输出：''1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
-    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-    inet 127.0.0.1/8 scope host lo
-       valid_lft forever preferred_lft forever
-    inet6 ::1/128 scope host 
-       valid_lft forever preferred_lft forever
-2: ens160: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
-    link/ether 00:0c:29:a8:e2:23 brd ff:ff:ff:ff:ff:ff
-    altname enp3s0
-    inet 192.168.100.20/24 brd 192.168.100.255 scope global noprefixroute ens160
-       valid_lft forever preferred_lft forever
-    inet 192.168.100.130/24 brd 192.168.100.255 scope global secondary dynamic noprefixroute ens160
-       valid_lft 1490sec preferred_lft 1490sec
-    inet6 fe80::20c:29ff:fea8:e223/64 scope link noprefixroute 
-       valid_lft forever preferred_lft forever
-3: ens192: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
-    link/ether 00:0c:29:a8:e2:2d brd ff:ff:ff:ff:ff:ff
-    altname enp11s0
-    inet 192.168.109.133/24 brd 192.168.109.255 scope global dynamic noprefixroute ens192
-       valid_lft 1251sec preferred_lft 1251sec
-    inet6 fe80::20c:29ff:fea8:e22d/64 scope link noprefixroute 
-       valid_lft forever preferred_lft forever
-- 理解:lo是本地回环地址是127.0.0.1/8，仅主机的ip地址是192.168.100.20子网掩码是255.255.255.0，NAT的ip地址是动态分配的。
-
-4.**查看内存使用情况**
--命令： 'free -h'
--我的输出： '               total        used        free      shared  buff/cache   available
-Mem:           3.5Gi       1.1Gi       2.0Gi        21Mi       651Mi       2.4Gi
-Swap:          3.9Gi          0B       3.9Gi'
--理解： -h 参数让容量以人类可读的 Gi/Mi 单位显示。在评估系统是否还有足够内存运行新服务时，不能看 free（完全未被分配的内存，当前仅 21Mi），而必须看 available（系统当前实际可提供给新进程使用的内存，当前有 2.4Gi）。这台机器目前内存非常充足。
-
-5.**查看磁盘空间**
--命令： 'df -h'
--我的输出： ''文件系统             容量  已用  可用 已用% 挂载点
-devtmpfs             1.8G     0  1.8G    0% /dev
-tmpfs                1.8G     0  1.8G    0% /dev/shm
-tmpfs                725M  9.7M  715M    2% /run
-efivarfs             256K   55K  197K   22% /sys/firmware/efi/efivars
-/dev/mapper/cs-root   35G  5.2G   30G   16% /
-/dev/nvme0n1p2       960M  432M  529M   45% /boot
-/dev/nvme0n1p1       599M  7.3M  592M    2% /boot/efi
-tmpfs                363M   96K  363M    1% /run/user/1000
-/dev/sr0              15G   15G     0  100% /run/media/qing/CentOS-Stream-9-BaseOS-x86_64
-
--理解： 核心关注挂载点为 /（根目录）的那一行。我当前的根目录所在分区是 /dev/mapper/cs-root，总容量 35G，已用 5.2G，使用了 16%。在日常运维中，如果这个挂载点的使用率超过 80%，就需要立刻通过 du -sh * 命令去寻找并清理大文件（通常是无用的旧日志）了
-
-6.**查看设备状态（Device）**
--命令： nmcli device status
--我的输出：DEVICE  TYPE      STATE         CONNECTION 
-ens192  ethernet  已连接        ens192     
-ens160  ethernet  已连接        ens160     
-lo      loopback  连接（外部）  lo 
--理解：这条命令是用来检测底层的物理网卡，现在有三块儿网卡
-
-7.**查看连接状态**
-- 命令：'nmcli connection show'
-- 我的输出：NAME    UUID                                  TYPE      DEVICE 
-ens192  200f934a-4e77-3c47-8989-2470902617f9  ethernet  ens192 
-ens160  9bba0e7a-2a2c-3cc7-8605-741bdcd53837  ethernet  ens160 
-lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo 
-- 理解： 已经有了两块物理网卡和一块虚拟网卡的配置信息文件
-
-8.**配置网卡信息**
-- 命令： 'nmcli connection modify ens160 ipv4.method manual ipv4.addresses 192.168.100.20/24 autoconnect yes ipv4.gateway ""'
-- 我的输出：
--理解： 配置修改网卡ens160为静态IP并手动配置IP设置开机自启并把网关设为空
-
-9.**重启网卡**
-- 命令： nmcli connection up ens160
-- 我的输出：
-- 理解：重启ens160使其配置生效。
-
-10.**查看服务状态**
-- 命令： systemctl status nginx
-- 我的输出：
-- 理解： 用来查看服务的状态
-
-11.**启动服务**
-- 命令： systemctl start nginx
-- 我的输出：
-- 理解： 用于启动服务
-
-12.**设置开机自启动**
-- 命令： systemctl enable nginx
-- 我的输出：
-- 理解：让服务在以后的开机时自启动
-
-13.**关闭开机自启动**
-- 命令： systemctl disable nginx
-- 我的输出：
-- 理解：关闭服务的开机自启动
-
-### Day 2: Nginx 服务与 Firewall 防火墙排障实战
 1. **接管与验证系统服务 (systemd)**
-   - 启动并设置开机自启：`sudo systemctl start nginx` / `sudo systemctl enable nginx`
+   - 启动和设置开机自启：`sudo systemctl start nginx` / `sudo systemctl enable nginx`
    - 端口监听检查：`ss -tulnp | grep 80` (查看到 0.0.0.0:80 处于 LISTEN 状态，代表服务内部运行正常)
 
 2. **故障排查：Nginx 启动正常但浏览器访问超时**
-   - **故障现象**：终端显示服务运行正常，但宿主机浏览器访问静态 IP 时提示 `ERR_CONNECTION_TIMED_OUT`。
+   - **故障现象**：终端显示运行正常，但主机浏览器访问静态 ip 时提示 `ERR_CONNECTION_TIMED_OUT`。
    - **排错逻辑**：服务在虚拟机内部正常监听，但外部请求进不来，果断判定为 CentOS 9 默认的防火墙 (`firewalld`) 拦截了流量。
    - **解决步骤**：
      1. `sudo firewall-cmd --state` (确认防火墙正在运行)
@@ -252,10 +131,9 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 - `sudo docker compose down`：一键摧毁集群容器及网络（但通过 volumes 挂载的数据会安全保留）。
 
 
-> **核心心法**：拒绝死记硬背枯燥的英文报错，用工具精准“切”出关键指标。
-> **排错三板斧**：一查网络通不通，二查资源满不满，三查日志报啥错。
+> **排错三法**：一查网络通不通，二查资源满不满，三查日志报啥错。
 
-13. 进程与资源监控（服务器累不累）
+13. 进程与资源监控
 
 当系统卡顿、容器无故崩溃时，优先排查资源占用。
 
@@ -268,41 +146,41 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 
 ---
 
-14. 网络与端口排查（门通没通，被谁占了）
+14. 网络与端口排查
 
-部署新项目（如 WordPress、Nginx）启动失败，或者网页打不开时使用。
+部署新项目启动失败，或者网页打不开时使用。
 
 | 诊断目标 | 实操命令 | 核心盯防指标与避坑要点 |
 | :--- | :--- | :--- |
 | **全局端口巡检** | `ss -tulnp` | 速度极快。看 `Local Address:Port` 和最右侧 `pid=xxx`。 |
-| **抓捕特定端口占用** | `lsof -i:端口号` | 极其精准（如查 80 端口）。直接输出占用该端口的进程号 `PID`。 |
+| **抓捕特定端口占用** | `lsof -i:端口号` | 极其精准。直接输出占用该端口的进程号 `PID`。 |
 | **探测对方服务死活** | `nc -vz IP 端口` | 验证特定端口（如 3306 数据库）是否开放。返回 `succeeded!` / `Connected` 为通，`refused` 为防火墙拦截。 |
 | **强行释放端口** | `kill -9 PID` | 拿到进程号后直接击杀。**警告：确认是非核心业务后再杀。** |
 
 ---
 
-15. 磁盘 I/O 高级排错（隐藏的性能杀手）
+15. 磁盘 I/O 高级排错
 
 当 CPU 和内存充裕，但系统依然响应极慢时，大概率是硬盘读写（I/O）卡死。
 
-* **看大盘（抓瓶颈）：**
+* **看大盘：**
   * **命令：** `iostat -dx 1`
-  * **怎么看：** 死死盯住 `vda`（系统盘）行的最右侧 **`%util`**。低于 80% 健康，逼近 100% 说明磁盘通道已完全堵死。按 `Ctrl+C` 退出。
+  * **怎么看：** 盯住 `vda`（系统盘）行的最右侧 **`%util`**。低于 80% 健康，逼近 100% 说明磁盘通道已完全堵死。按 `Ctrl+C` 退出。
 * **抓内鬼（查谁在写）：**
   * **命令：** `iotop -o`
   * **怎么看：** 类似 top，重点看谁的 `DISK WRITE` 飙得最高。按 `q` 退出。
 
 ---
 
-16. 日志分析三剑客（无视大段英文）
+16. 日志分析三剑客
 
 利用管道符 `|`，将前置命令的输出作为后置命令的输入，层层过滤。
 
-1. **`grep`（找错小能手）**
+1. **`grep`（过滤）**
    * `cat app.log | grep -i "error"` ：忽略大小写，挑出所有报错行，过滤掉正常日志。
-2. **`awk`（精准切分器）**
+2. **`awk`（切片）**
    * `grep "Failed" secure.log | awk '{print $11}'` ：按空格切分，精准提取目标数据（如第11列的黑客 IP）。
-3. **`sed`（批量魔术师）**
+3. **`sed`（修改）**
    * `sed -i 's/8080/80/g' nginx.conf` ：不打开文件，直接在后台将所有 8080 端口替换为 80。
 
 
@@ -313,10 +191,10 @@ lo      a5ed8ef2-996b-41ea-bba4-783efb16f9f8  loopback  lo
 
 第一步：排查大盘（锁定磁盘元凶）
 1. `df -h` ：重点看根目录 `/` 的 `Use%` 是否达到 100%。
-2. `iostat -dx 1` ：重点看 `vda` 磁盘的 `%util` 是否达到 100%（即磁盘通道因疯狂写入被彻底卡死）。
-*(注：排查时也要顺手看一眼 `free -m` 和 `top`，确保不是内存耗尽或 CPU 跑满引发的故障。)*
+2. `iostat -dx 1` ：重点看 `vda` 磁盘的 `%util` 是否达到 100%（磁盘通道因疯狂写入被彻底卡死）。
+*(注：排查时也要看一眼 `free -m` 和 `top`，确保不是内存耗尽或 CPU 跑满引发的故障。)*
 
-d第二步：精准定位（揪出巨型垃圾文件）
+d第二步：精准定位
 当确认是磁盘满了之后，使用以下命令找内鬼：
 
 * **命令A：找单体大文件**
@@ -335,32 +213,32 @@ d第二步：精准定位（揪出巨型垃圾文件）
 模块一：Nginx 反向代理网关部署
 
 1. 核心安装与控制指令
-使用包管理器安装 Nginx (-y 自动确认)
+使用包管理器安装 Nginx
 sudo dnf install nginx -y
 
-启动 Nginx 并设置开机自启 (一条命令打通)
+启动 Nginx 并设置开机自启 
 sudo systemctl enable --now nginx
 
 检查运行状态 (寻找 active running 绿字)
 sudo systemctl status nginx
 
 2. 目录结构与底层架构解密
-默认网页存放路径 (胃)：/usr/share/nginx/html/
+默认网页存放路径 ：/usr/share/nginx/html/
 
 实战操作：使用 echo "<h1>Hello Server</h1>" > /usr/share/nginx/html/index.html 可直接覆盖默认网页进行快速测试。
 
-核心配置文件路径 (大脑)：/etc/nginx/nginx.conf
+核心配置文件路径 ：/etc/nginx/nginx.conf
 
-严禁直接大改主配置文件！主配置中通过 include /etc/nginx/conf.d/*.conf; 实现了配置解耦。
+禁止直接大改主配置文件！主配置中通过 include /etc/nginx/conf.d/*.conf; 实现了配置解耦。
 
-企业规范做法：在 conf.d/ 目录下为每个新网站创建独立的 .conf 文件。
+规范做法：在 conf.d/ 目录下为每个新网站创建独立的 .conf 文件。
 
 模块二：MySQL 8.0 关系型数据库底层铸造
 1. 安装与守护进程唤醒
 安装 MySQL 服务端
 sudo dnf install mysql-server -y
 
-唤醒 MySQL 守护大老板 (注意末尾的 d)
+唤醒 MySQL 守护进程 
 sudo systemctl enable --now mysqld
 
 2. 核心大闸：纯命令行安全加固向导
@@ -372,37 +250,35 @@ Bash
 以 root 身份登录，并请求输入密码
 mysql -u root -p
 
-【SQL 实战】查看当前系统核心数据库 (务必加分号！)
+查看当前系统核心数据库 
 mysql> show databases;
 
 安全退出数据库控制台
 mysql> exit;
 
-4.**实战场景**：为了保障服务器数据安全，绝不能在代码中直接暴露 root 超级管理员密码。必须为每个独立的业务系统开辟专属的“小金库”，并配备权限严格受限的“专属业务账号”。
+4.**实战场景**：为了保障服务器数据安全，绝不能在代码中直接暴露 root 超级管理员密码。必须为每个独立的业务系统开辟专属的数据库，并配备权限严格受限的“专属业务账号”。
 
 核心操作流（DBA 标准规范）
 
-1. 以最高指挥官身份登舰
+1. 以最高身份登舰
 使用 root 账号登录 MySQL
 mysql -u root -p
 
-2. 开辟专属业务金库 (创建数据库)
+2. 创建数据库
 企业级规范：必须指定兼容全球字符和 Emoji 的 utf8mb4 字符集，防止未来业务出现中文乱码。
 CREATE DATABASE app_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-3. 招募专属业务员 (创建普通账号)
+3. 创建普通账号
 企业安全红线：限制账号只能从服务器本地 (localhost) 登录，彻底切断公网直连的被黑风险。
 
-4.颁发专属钥匙 (权限下放与授权)
+4.权限下放与授权
 将 app_db 的所有操作权限授予该业务账号。
 
 排错避坑笔记：
-SQL 语法极其严格，务必注意单词拼写，切勿将 GRANT (授予) 误敲为 CRANT，否则会引发 ERROR 1064 (42000) SQL syntax 语法报错。
-若敲击中途漏掉分号导致出现 -> 提示符，可使用 Ctrl + C 强制中断当前错误输入。
 正确的授权指令
 GRANT ALL PRIVILEGES ON app_db.* TO 'app_user'@'localhost';
 
-刷新系统权限表，使授权立刻生效！(极其重要)
+刷新系统权限
 FLUSH PRIVILEGES;
 
 5. 安全撤离与权限验证
@@ -421,37 +297,36 @@ mysql> show databases;
 
 核心操作流
 
-1. 底层安装与引擎点火
-使用包管理器极速安装
+1. 底层安装
 sudo dnf install redis -y
 
-唤醒守护进程并写入开机启动项
+唤醒守护进程和写入开机启动项
 sudo systemctl enable --now redis
 
-2. 核心大闸：企业级安全加固 (vi 高阶搜索实战)
-默认安装的 Redis 处于极其危险的无密码状态，必须深潜入 /etc/redis.conf 进行加固。
+2. 核心：安全加固 
+默认安装的 Redis 处于无密码状态，必须深潜入 /etc/redis.conf 进行加固。
 sudo vi /etc/redis.conf
 
-vi 搜索脱困绝技：
+vi 搜索办法：
 
 输入 /requirepass 开启全局搜索。
 
-遇到大量 # If the master is... 等官方说明文档干扰时，果断按 n 键 (next) 跳跃匹配，直到锁定真正的配置项 # requirepass foobared。
+按 n 键 跳跃匹配，直到锁定真正的配置项 # requirepass foobared。
 
 核心修改动作：
 
-上锁：按 i 删掉 # 解除注释，将密码替换为强密码（如 requirepass Redis@2026）。
+上锁：按 i 删掉 # 解除注释，将密码替换为强密码。
 
-断网：搜索并确认 bind 127.0.0.1 存在，死守网络边界，彻底切断公网直连的可能。
+断网：搜索并确认 bind 127.0.0.1 存在，守护网络边界，彻底切断公网直连的可能。
 
 3. 重启生效与鉴权测试
-踢醒系统管家，重新加载配置
+唤醒系统管家，重新加载配置
 sudo systemctl restart redis
 
 踏入控制台
 redis-cli
 
-鉴权拦截测试：直接敲击 ping，触发 (error) NOAUTH Authentication required. 报错，验证防盗锁生效。
+拦截测试：直接敲击 ping，触发 (error) NOAUTH Authentication required. 报错，验证防盗锁生效。
 
 合法授权通行：
 127.0.0.1:6379> auth 你的密码
